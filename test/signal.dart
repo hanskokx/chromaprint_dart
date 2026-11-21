@@ -11,28 +11,28 @@ Int16List testSignal({
   required double seconds,
   double leadingSilence = 0,
 }) {
-  final frames = (sampleRate * seconds).round();
-  final silentFrames = (sampleRate * leadingSilence).round();
-  final out = Int16List((frames + silentFrames) * channels);
-  var seed = 12345;
+  final int frames = (sampleRate * seconds).round();
+  final int silentFrames = (sampleRate * leadingSilence).round();
+  final Int16List out = Int16List((frames + silentFrames) * channels);
+  int seed = 12345;
   double noise() {
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     return seed / 0x7fffffff * 2 - 1;
   }
 
   // Semitones above A3 (220 Hz) for each step's chord.
-  const chords = [
+  const List<List<int>> chords = [
     [0, 4, 7], [5, 9, 12], [7, 11, 14], [3, 7, 10], //
     [2, 5, 9], [8, 12, 15], [10, 14, 17], [1, 4, 8],
   ];
-  for (var f = 0; f < frames; f++) {
-    final t = f / sampleRate;
-    final step = (t * 2).floor();
-    for (var c = 0; c < channels; c++) {
-      final chord = chords[(step * 3 + c * 5) % chords.length];
-      var v = 0.0;
-      for (final semitone in chord) {
-        final freq = 220 * math.pow(2, semitone / 12);
+  for (int f = 0; f < frames; f++) {
+    final double t = f / sampleRate;
+    final int step = (t * 2).floor();
+    for (int c = 0; c < channels; c++) {
+      final List<int> chord = chords[(step * 3 + c * 5) % chords.length];
+      double v = 0.0;
+      for (final int semitone in chord) {
+        final num freq = 220 * math.pow(2, semitone / 12);
         v += math.sin(2 * math.pi * freq * t);
       }
       v = v / chord.length * 0.6 + noise() * 0.05;
@@ -47,11 +47,11 @@ Int16List testSignal({
 
 /// Writes [samples] as a 16-bit PCM WAV file.
 void writeWav(File file, Int16List samples, int sampleRate, int channels) {
-  final data = samples.buffer.asUint8List(
+  final Uint8List data = samples.buffer.asUint8List(
     samples.offsetInBytes,
     samples.lengthInBytes,
   );
-  final header = ByteData(44)
+  final ByteData header = ByteData(44)
     ..setUint32(0, 0x52494646) // RIFF
     ..setUint32(4, 36 + data.length, Endian.little)
     ..setUint32(8, 0x57415645) // WAVE

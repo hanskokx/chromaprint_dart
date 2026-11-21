@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import "dart:io";
 import "dart:math" as math;
 import "dart:typed_data";
@@ -24,7 +26,7 @@ void main(List<String> args) {
   print("Hash: ${fingerprint.hash}");
 
   final File output = File(args.isEmpty ? "fingerprint.png" : args.first);
-  output.writeAsBytesSync(fingerprint.image);
+  output.writeAsBytesSync(fingerprint.png);
   print("Wrote ${output.path}");
 
   final Fingerprint restored = Fingerprint(fingerprint.toString());

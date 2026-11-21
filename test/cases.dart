@@ -7,7 +7,7 @@ typedef Case = ({
   double leadingSilence,
 });
 
-const cases = <Case>[
+const List<Case> cases = <Case>[
   (
     name: "mono_11025",
     rate: 11025,

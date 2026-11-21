@@ -13,6 +13,11 @@ import "package:test/test.dart";
 import "cases.dart";
 import "signal.dart";
 
+// I'm not saying you should violate YouTube's ToS, but if you decide to, you could replicate the AcoustID test as outlined in the "How it works" section on https://acoustid.org/ by downloading the first two minutes of audio from the video they link, then comparing their image to the one we generate. If one was so inclined, that could be accomplished by running:
+// `yt-dlp --download-sections "*0:00-2:00" -x --audio-format mp3 'https://www.youtube.com/watch?v=l6P1ymcIR-w'`
+// ...which is definitely against the YouTube ToS, and the author of this package does not condone.
+// But hey. You do you.
+
 /// Reference output from Chromaprint's own fpcalc for every algorithm,
 /// recorded in test/fixtures/fpcalc.json by tool/record_fixtures.dart.
 final Map<String, Object?> reference =
@@ -28,23 +33,23 @@ Map<String, Object?> expectedFor(String name, ChromaprintAlgorithm algorithm) {
 
 /// The share of bits that differ, over the longer of the two.
 double bitErrorRate(List<int> a, List<int> b) {
-  final n = a.length < b.length ? a.length : b.length;
-  var errors = ((a.length - b.length).abs()) * 32;
-  for (var i = 0; i < n; i++) {
-    var x = (a[i] ^ b[i]) & 0xffffffff;
+  final int n = a.length < b.length ? a.length : b.length;
+  int errors = ((a.length - b.length).abs()) * 32;
+  for (int i = 0; i < n; i++) {
+    int x = (a[i] ^ b[i]) & 0xffffffff;
     while (x != 0) {
       errors += x & 1;
       x >>= 1;
     }
   }
-  final total = (a.length > b.length ? a.length : b.length) * 32;
+  final int total = (a.length > b.length ? a.length : b.length) * 32;
   return total == 0 ? 0 : errors / total;
 }
 
 /// fpcalc has FFmpeg's swresample mix more than two channels down with
 /// surround weights; libchromaprint, and this port, average them. On the
 /// 5-channel test signal 17% of the bits differ.
-const surroundGap =
+const String surroundGap =
     "Known gap: swresample's surround downmix isn't emulated yet.";
 
 void main() {
@@ -144,8 +149,9 @@ void main() {
   group("compression", () {
     test("encodes fpcalc's raw fingerprints byte for byte", () {
       for (final c in cases) {
-        for (final algorithm in ChromaprintAlgorithm.values) {
-          final expected = expectedFor(c.name, algorithm);
+        for (final ChromaprintAlgorithm algorithm
+            in ChromaprintAlgorithm.values) {
+          final Map<String, Object?> expected = expectedFor(c.name, algorithm);
           final List<int>? raw = (expected["raw"] as List<Object?>?)
               ?.cast<int>();
           if (raw == null) continue;
@@ -159,7 +165,7 @@ void main() {
     });
 
     test("writes the algorithm into the header", () {
-      final bytes = codec.compressFingerprint(
+      final Uint8List bytes = codec.compressFingerprint(
         [1],
         algorithm: ChromaprintAlgorithm.test5,
       );
@@ -168,7 +174,7 @@ void main() {
 
     test("large bit gaps go to the exceptional stream", () {
       // Bits 1 and 32: a gap of 31, over the 3-bit maximum of 7.
-      final bytes = codec.compressFingerprint([0x80000001]);
+      final Uint8List bytes = codec.compressFingerprint([0x80000001]);
       expect(bytes.sublist(0, 4), [1, 0, 0, 1]);
       // Normal values 1, 7, 0 in 3 bits each; exceptional 31 - 7 = 24.
       expect(bytes.sublist(4), [0x39, 0x00, 24]);
@@ -184,12 +190,13 @@ void main() {
   group("decoding", () {
     test("decodes fpcalc's fingerprints to its raw ones", () {
       for (final c in cases) {
-        for (final algorithm in ChromaprintAlgorithm.values) {
-          final expected = expectedFor(c.name, algorithm);
+        for (final ChromaprintAlgorithm algorithm
+            in ChromaprintAlgorithm.values) {
+          final Map<String, Object?> expected = expectedFor(c.name, algorithm);
           final List<int>? raw = (expected["raw"] as List<Object?>?)
               ?.cast<int>();
           if (raw == null) continue;
-          final decoded = decoder.decodeFingerprint(
+          final DecodedFingerprint decoded = decoder.decodeFingerprint(
             expected["fingerprint"]! as String,
           );
           expect(
@@ -203,17 +210,21 @@ void main() {
     });
 
     test("round-trips exceptional gaps and every bit", () {
-      const raw = [0x80000001, 0xffffffff, 0, 0x40000000, 0x12345678];
-      for (final algorithm in ChromaprintAlgorithm.values) {
-        final encoded = codec.encodeFingerprint(raw, algorithm: algorithm);
-        final decoded = decoder.decodeFingerprint(encoded);
+      const List<int> raw = [0x80000001, 0xffffffff, 0, 0x40000000, 0x12345678];
+      for (final ChromaprintAlgorithm algorithm
+          in ChromaprintAlgorithm.values) {
+        final String encoded = codec.encodeFingerprint(
+          raw,
+          algorithm: algorithm,
+        );
+        final DecodedFingerprint decoded = decoder.decodeFingerprint(encoded);
         expect(decoded.algorithm, algorithm);
         expect(decoded.raw, raw);
       }
     });
 
     test("base64 decodes what it encodes", () {
-      for (final bytes in [
+      for (final List<int> bytes in [
         <int>[],
         [1],
         [0xfb, 0xff],
@@ -247,8 +258,8 @@ void main() {
     Map<String, Uint8List> chunks(Uint8List png) {
       expect(png.sublist(0, 8), [137, 80, 78, 71, 13, 10, 26, 10]);
       final out = <String, Uint8List>{};
-      final data = ByteData.sublistView(png);
-      var o = 8;
+      final ByteData data = ByteData.sublistView(png);
+      int o = 8;
       while (o < png.length) {
         final length = data.getUint32(o);
         final type = String.fromCharCodes(png.sublist(o + 4, o + 8));
@@ -262,14 +273,14 @@ void main() {
     }
 
     Uint8List pngOf(List<int> raw) =>
-        Fingerprint(codec.encodeFingerprint(raw)).image;
+        Fingerprint(codec.encodeFingerprint(raw)).png;
 
     test("draws a column per sub-fingerprint, bit 0 at the top", () {
       // Column 0: bits 0 and 1; column 1: none; ... column 8: all.
-      final raw = [0x00000003, 0, 0, 0, 0, 0, 0, 0, 0xffffffff];
-      final parts = chunks(pngOf(raw));
+      final List<int> raw = [0x00000003, 0, 0, 0, 0, 0, 0, 0, 0xffffffff];
+      final Map<String, Uint8List> parts = chunks(pngOf(raw));
       expect(parts.keys, ["IHDR", "PLTE", "IDAT", "IEND"]);
-      final header = ByteData.sublistView(parts["IHDR"]!);
+      final ByteData header = ByteData.sublistView(parts["IHDR"]!);
       expect(header.getUint32(0), 9);
       expect(header.getUint32(4), 32);
       // 1-bit palette, deflate, no filter, no interlace.
@@ -277,15 +288,15 @@ void main() {
       // Clear bits white, set bits AcoustID's #1a1a1a.
       expect(parts["PLTE"], [255, 255, 255, 0x1a, 0x1a, 0x1a]);
 
-      final pixels = zlib.decode(parts["IDAT"]!);
-      const stride = 2; // 9 pixels in 1-bit rows
+      final List<int> pixels = zlib.decode(parts["IDAT"]!);
+      const int stride = 2; // 9 pixels in 1-bit rows
       expect(pixels, hasLength((stride + 1) * 32));
       bool set(int x, int y) {
         final byte = pixels[y * (stride + 1) + 1 + (x >> 3)];
         return (byte >> (7 - (x & 7))) & 1 == 1;
       }
 
-      for (var y = 0; y < 32; y++) {
+      for (int y = 0; y < 32; y++) {
         expect(pixels[y * (stride + 1)], 0, reason: "filter byte");
         expect(set(0, y), y <= 1, reason: "column 0, row $y");
         expect(set(1, y), isFalse);
@@ -294,8 +305,11 @@ void main() {
     });
 
     test("a 2-minute fingerprint fits in a few kilobytes", () {
-      final raw = List<int>.generate(950, (i) => (i * 2654435761) & 0xffffffff);
-      final png = pngOf(raw);
+      final List<int> raw = List<int>.generate(
+        950,
+        (i) => (i * 2654435761) & 0xffffffff,
+      );
+      final Uint8List png = pngOf(raw);
       expect(png.length, lessThan(5000));
       expect(zlib.decode(chunks(png)["IDAT"]!), hasLength(32 * (1 + 119)));
     });
@@ -337,7 +351,7 @@ void main() {
     });
 
     test("leading silence is skipped starting at the crossing sample", () {
-      final samples = Int16List.fromList([
+      final Int16List samples = Int16List.fromList([
         0,
         0,
         0,
@@ -370,8 +384,10 @@ void main() {
     });
 
     test("options are exposed on the instance", () {
-      final options = ChromaprintOptions(silenceThreshold: 40);
-      final chromaprint = Chromaprint(
+      final ChromaprintOptions options = ChromaprintOptions(
+        silenceThreshold: 40,
+      );
+      final Chromaprint chromaprint = Chromaprint(
         algorithm: ChromaprintAlgorithm.test4,
         options: options,
       );
@@ -380,7 +396,7 @@ void main() {
     });
 
     test("the silence threshold only affects test4", () {
-      final audio = testSignal(
+      final Int16List audio = testSignal(
         sampleRate: 11025,
         channels: 1,
         seconds: 12,
@@ -394,7 +410,7 @@ void main() {
     });
 
     test("changing the silence threshold changes test4's fingerprint", () {
-      final audio = testSignal(
+      final Int16List audio = testSignal(
         sampleRate: 11025,
         channels: 1,
         seconds: 12,
@@ -413,7 +429,8 @@ void main() {
 
   group("algorithm", () {
     test("maps to and from the C library's ids", () {
-      for (final algorithm in ChromaprintAlgorithm.values) {
+      for (final ChromaprintAlgorithm algorithm
+          in ChromaprintAlgorithm.values) {
         expect(
           ChromaprintAlgorithm.fromValue(algorithm.value),
           same(algorithm),
@@ -432,10 +449,10 @@ void main() {
 }
 
 int _crc32(List<int> bytes) {
-  var crc = 0xffffffff;
-  for (final byte in bytes) {
+  int crc = 0xffffffff;
+  for (final int byte in bytes) {
     crc ^= byte;
-    for (var k = 0; k < 8; k++) {
+    for (int k = 0; k < 8; k++) {
       crc = crc & 1 != 0 ? 0xedb88320 ^ (crc >> 1) : crc >> 1;
     }
   }
