@@ -2,7 +2,15 @@ name: chromaprint_dart
 description: >-
   A pure-Dart port of Chromaprint's default fingerprint (algorithm 2), the
   audio fingerprint AcoustID looks up. No native code or external program.
-version: 0.1.0
+version: 1.0.0
+repository: https://github.com/hanskokx/chromaprint_dart
+issue_tracker: https://github.com/hanskokx/chromaprint_dart/issues
+
+topics:
+  - audio
+  - fingerprinting
+  - acoustid
+  - chromaprint
 
 environment:
   sdk: ^3.12.2
