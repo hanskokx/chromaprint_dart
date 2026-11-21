@@ -2,7 +2,7 @@ import "dart:convert";
 import "dart:io";
 import "dart:typed_data";
 
-import "package:chromaprint_dart/chromaprint.dart";
+import "package:chromaprint_dart/chromaprint_dart.dart";
 import "package:chromaprint_dart/src/compress.dart" as codec;
 import "package:chromaprint_dart/src/decompress.dart" as decoder;
 import "package:chromaprint_dart/src/fingerprinter.dart" as fingerprinter;

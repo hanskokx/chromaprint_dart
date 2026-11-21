@@ -4,7 +4,7 @@ import "dart:io";
 import "dart:math" as math;
 import "dart:typed_data";
 
-import "package:chromaprint_dart/chromaprint.dart";
+import "package:chromaprint_dart/chromaprint_dart.dart";
 
 void main(List<String> args) {
   // A ten-second 440 Hz tone as interleaved 16-bit PCM.
