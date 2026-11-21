@@ -9,9 +9,11 @@ Int16List testSignal({
   required int sampleRate,
   required int channels,
   required double seconds,
+  double leadingSilence = 0,
 }) {
   final frames = (sampleRate * seconds).round();
-  final out = Int16List(frames * channels);
+  final silentFrames = (sampleRate * leadingSilence).round();
+  final out = Int16List((frames + silentFrames) * channels);
   var seed = 12345;
   double noise() {
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
@@ -34,7 +36,10 @@ Int16List testSignal({
         v += math.sin(2 * math.pi * freq * t);
       }
       v = v / chord.length * 0.6 + noise() * 0.05;
-      out[f * channels + c] = (v * 32767).round().clamp(-32768, 32767);
+      out[(f + silentFrames) * channels + c] = (v * 32767).round().clamp(
+        -32768,
+        32767,
+      );
     }
   }
   return out;

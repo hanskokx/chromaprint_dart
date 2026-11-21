@@ -4,8 +4,7 @@
 
 import "dart:typed_data";
 
-/// Chromaprint's id for its default algorithm (CHROMAPRINT_ALGORITHM_TEST2).
-const int defaultAlgorithm = 1;
+import "algorithm.dart";
 
 const int _normalBits = 3;
 const int _maxNormalValue = (1 << _normalBits) - 1;
@@ -13,13 +12,15 @@ const int _maxNormalValue = (1 << _normalBits) - 1;
 /// Compresses a raw fingerprint the way `chromaprint_get_fingerprint` does
 /// and encodes it as URL-safe base64 without padding: the form `fpcalc`
 /// prints and AcoustID accepts.
-String encodeFingerprint(List<int> raw, {int algorithm = defaultAlgorithm}) =>
-    base64UrlNoPadding(compressFingerprint(raw, algorithm: algorithm));
+String encodeFingerprint(
+  List<int> raw, {
+  ChromaprintAlgorithm algorithm = ChromaprintAlgorithm.test2,
+}) => base64UrlNoPadding(compressFingerprint(raw, algorithm: algorithm));
 
 /// The compressed bytes, before base64.
 Uint8List compressFingerprint(
   List<int> raw, {
-  int algorithm = defaultAlgorithm,
+  ChromaprintAlgorithm algorithm = ChromaprintAlgorithm.test2,
 }) {
   final List<int> normal = [];
   final List<int> exceptional = [];
@@ -48,7 +49,7 @@ Uint8List compressFingerprint(
   }
   final int size = raw.length;
   return Uint8List.fromList([
-    algorithm & 255,
+    algorithm.value & 255,
     (size >> 16) & 255,
     (size >> 8) & 255,
     size & 255,

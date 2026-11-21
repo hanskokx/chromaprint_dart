@@ -1,15 +1,19 @@
-/// A pure-Dart port of Chromaprint's default audio fingerprint, the one
+/// A pure-Dart port of Chromaprint's audio fingerprints, including the one
 /// AcoustID looks up.
 ///
 /// ```dart
-/// final raw = rawFingerprint(pcm, sampleRate: 44100, channels: 2);
-/// final fingerprint = encodeFingerprint(raw); // what `fpcalc` prints
+/// final chromaprint = Chromaprint();
+/// final fingerprint = chromaprint.fingerprint(
+///   pcm,
+///   sampleRate: 44100,
+///   channels: 2,
+/// );
+/// print(fingerprint); // the string fpcalc prints
 /// ```
 library;
 
-export "src/compress.dart";
-export "src/decompress.dart";
-export "src/fingerprint.dart"
-    show downmix, fingerprintSampleRate, rawFingerprint;
-export "src/image.dart";
-export "src/resampler.dart" show resample;
+export "src/algorithm.dart";
+export "src/chromaprint.dart";
+export "src/decompress.dart" show DecodedFingerprint;
+export "src/fingerprint.dart";
+export "src/options.dart";

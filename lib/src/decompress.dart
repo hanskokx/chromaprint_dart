@@ -4,12 +4,14 @@
 
 import "dart:typed_data";
 
+import "algorithm.dart";
+
 /// A fingerprint read back from its encoded form.
 class DecodedFingerprint {
   const DecodedFingerprint(this.algorithm, this.raw);
 
-  /// Chromaprint's algorithm id (1 for the default).
-  final int algorithm;
+  /// The algorithm that produced the fingerprint.
+  final ChromaprintAlgorithm algorithm;
 
   /// The 32-bit sub-fingerprints, one per 1365 samples at 11025 Hz.
   final Uint32List raw;
@@ -72,7 +74,7 @@ DecodedFingerprint decompressFingerprint(Uint8List bytes) {
     }
     x |= 1 << (lastBit - 1);
   }
-  return DecodedFingerprint(algorithm, raw);
+  return DecodedFingerprint(ChromaprintAlgorithm.fromValue(algorithm), raw);
 }
 
 int _bits(Uint8List bytes, int pos, int count) {
