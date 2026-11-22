@@ -1,5 +1,6 @@
 // A port of Chromaprint's fingerprinter (https://github.com/acoustid/chromaprint),
-// Copyright (C) 2010-2016 Lukas Lalinsky, MIT licensed; see LICENSE.
+// Copyright (C) 2010-2016 Lukas Lalinsky, MIT licensed;
+// see THIRD_PARTY_NOTICES.md.
 
 import "dart:math" as math;
 import "dart:typed_data";

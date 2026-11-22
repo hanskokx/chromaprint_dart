@@ -1,6 +1,6 @@
 // A port of Chromaprint's fingerprint decompressor and base64 decoder
 // (https://github.com/acoustid/chromaprint), Copyright (C) 2010-2016
-// Lukas Lalinsky, MIT licensed; see LICENSE.
+// Lukas Lalinsky, MIT licensed; see THIRD_PARTY_NOTICES.md.
 
 import "dart:typed_data";
 

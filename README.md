@@ -73,4 +73,4 @@ During development, the two-minute “Lights” MP3 and AcoustID's `canvas.png` 
 
 ## License
 
-LGPL-2.1; see `LICENSE`. The resampler ports LGPL-2.1-or-later FFmpeg code bundled with Chromaprint. The rest ports Chromaprint's own MIT-licensed code, and its notice is kept in `LICENSE`.
+LGPL-2.1; see `LICENSE`. Upstream notices for the FFmpeg resampler and Chromaprint's MIT-licensed code are in `THIRD_PARTY_NOTICES.md`.
